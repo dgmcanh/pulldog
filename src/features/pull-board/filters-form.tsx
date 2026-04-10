@@ -37,6 +37,12 @@ export const FiltersForm = ({
         key={form.key("starred")}
         {...form.getInputProps("starred")}
       />
+      <Switch
+        label="By Me"
+        defaultChecked={initialValues.byMe}
+        key={form.key("byMe")}
+        {...form.getInputProps("byMe")}
+      />
     </form>
   );
 };

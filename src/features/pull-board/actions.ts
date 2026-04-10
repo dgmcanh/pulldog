@@ -15,6 +15,21 @@ export async function getBoardData(): Promise<BoardData> {
     provider: account.provider,
   }));
 
+  const currentUserLogins = filters.byMe
+    ? new Set(
+        (
+          await Promise.all(
+            accounts.map((account) =>
+              getProvider(account.provider).getCurrentUser(account.token),
+            ),
+          )
+        )
+          .filter(Boolean)
+          .map((u) => u!.login)
+          .filter(Boolean) as string[],
+      )
+    : null;
+
   for (const account of accounts) {
     const provider = getProvider(account.provider);
 
@@ -24,11 +39,17 @@ export async function getBoardData(): Promise<BoardData> {
     });
 
     const pullsPromises = repos.map(async (repo) => {
-      const pulls = await provider.listPullRequests({
+      let pulls = await provider.listPullRequests({
         token: account.token,
         owner: account.provider === "github" ? repo.owner!.login : undefined,
         repo: account.provider === "github" ? repo.name! : repo.id!,
       });
+
+      if (currentUserLogins) {
+        pulls = pulls.filter(
+          (pull) => pull.author?.login && currentUserLogins.has(pull.author.login),
+        );
+      }
 
       return { id: repo.id, pulls };
     });
@@ -55,13 +76,15 @@ export async function getBoardData(): Promise<BoardData> {
 export async function setFilters({
   empty,
   starred,
+  byMe,
 }: {
   empty: boolean;
   starred: boolean;
+  byMe: boolean;
 }) {
   const cookieStore = await cookies();
 
-  cookieStore.set("board-filters", JSON.stringify({ empty, starred }), {
+  cookieStore.set("board-filters", JSON.stringify({ empty, starred, byMe }), {
     maxAge: Number.MAX_SAFE_INTEGER,
   });
 }
@@ -70,7 +93,7 @@ export async function getFilters(): Promise<BoardFilters> {
   const cookieStore = await cookies();
 
   if (!cookieStore.has("board-filters")) {
-    return { empty: false, starred: false };
+    return { empty: false, starred: false, byMe: false };
   }
 
   const cookie = cookieStore.get("board-filters");
