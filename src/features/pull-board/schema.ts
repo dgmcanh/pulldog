@@ -8,4 +8,6 @@ export type BoardFilters = {
 
 export type BoardData = {
   repositories: (GitRepository & { pulls: GitPullRequest[] })[];
+  page: number;
+  hasMore: boolean;
 };

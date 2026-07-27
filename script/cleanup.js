@@ -18,4 +18,20 @@ dirsToDelete.forEach((dir) => {
   }
 });
 
+// post-order walk: children pruned first, so a dir holding only empty dirs goes too
+const removeEmptyDirs = (dir) => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name !== '.git') {
+      removeEmptyDirs(path.join(dir, entry.name));
+    }
+  }
+  if (dir !== rootDir && fs.readdirSync(dir).length === 0) {
+    console.log(`Removing empty ${dir}`);
+    fs.rmdirSync(dir);
+    count++;
+  }
+};
+
+removeEmptyDirs(rootDir);
+
 console.log(count > 0 ? '\n🧹 Done!\n' : '🧹 Done!\n');

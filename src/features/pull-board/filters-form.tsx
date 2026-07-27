@@ -2,44 +2,37 @@
 
 import { Switch } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useMutation } from "@tanstack/react-query";
-import { setFilters } from "./actions";
 import { BoardFilters } from "./schema";
 
 export const FiltersForm = ({
-  initialValues,
+  values,
+  onChange,
 }: {
-  initialValues: BoardFilters;
+  values: BoardFilters;
+  onChange: (values: BoardFilters) => void;
 }) => {
   const form = useForm({
     mode: "controlled",
-    initialValues,
-  });
-
-  const { mutate } = useMutation({
-    mutationFn: (values: BoardFilters) => setFilters(values),
+    initialValues: values,
   });
 
   return (
-    <form
-      onChange={form.onSubmit((values) => mutate(values))}
-      className="space-y-2"
-    >
+    <form onChange={form.onSubmit(onChange)} className="space-y-2">
       <Switch
         label="Empty"
-        defaultChecked={initialValues.empty}
+        defaultChecked={values.empty}
         key={form.key("empty")}
         {...form.getInputProps("empty")}
       />
       <Switch
         label="Starred"
-        defaultChecked={initialValues.starred}
+        defaultChecked={values.starred}
         key={form.key("starred")}
         {...form.getInputProps("starred")}
       />
       <Switch
         label="By Me"
-        defaultChecked={initialValues.byMe}
+        defaultChecked={values.byMe}
         key={form.key("byMe")}
         {...form.getInputProps("byMe")}
       />

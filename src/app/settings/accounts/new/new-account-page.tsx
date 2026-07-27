@@ -15,12 +15,26 @@ import {
   PageRow,
   PageTitle,
 } from "@/lib/ui/page";
-import { Button, Card, Select, Textarea } from "@mantine/core";
+import { Anchor, Button, Card, Select, Textarea } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
 import { useMutation } from "@tanstack/react-query";
-import { KeyRound, Router } from "lucide-react";
+import { ExternalLink, KeyRound, Router } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+// Token pages open with the name and scopes prefilled — the user only confirms.
+// Scopes are the read-only minimum the providers' calls need: repos, pull
+// requests and the current user (read:org so organization repos are listed).
+const tokenPages = {
+  github: {
+    label: "Create a GitHub token",
+    url: "https://github.com/settings/tokens/new?description=Pulldog&scopes=repo,read:org,read:user",
+  },
+  gitlab: {
+    label: "Create a GitLab token",
+    url: "https://gitlab.com/-/user_settings/personal_access_tokens?name=Pulldog&scopes=read_api",
+  },
+} as const;
 
 const NewAccountPage = () => {
   const router = useRouter();
@@ -103,6 +117,18 @@ const NewAccountPage = () => {
             key={key("token")}
             {...getInputProps("token")}
           />
+        </PageRow>
+        <PageRow className="pt-2">
+          <Anchor
+            className="col-start-2 flex w-fit items-center gap-1"
+            href={tokenPages[previewAccount.provider].url}
+            target="_blank"
+            rel="noreferrer"
+            size="sm"
+          >
+            {tokenPages[previewAccount.provider].label}
+            <ExternalLink size={14} />
+          </Anchor>
         </PageRow>
       </PageContent>
     </PageRoot>

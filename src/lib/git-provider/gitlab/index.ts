@@ -1,7 +1,31 @@
 import axios from "axios";
-import { GitProvider, GitPullRequest, GitRepository, GitUser } from "../schema";
+import {
+  DEFAULT_PER_PAGE,
+  GitProvider,
+  GitPullRequest,
+  GitRepository,
+  GitUser,
+  Paginated,
+} from "../schema";
 import { GitlabMergeRequest, GitlabProject, GitlabUser } from "./schema";
 import { mapState } from "./utils";
+
+const projectOrderBy = {
+  name: "name",
+  created: "created_at",
+  updated: "updated_at",
+} as const;
+
+const mergeRequestOrderBy = {
+  created: "created_at",
+  updated: "updated_at",
+} as const;
+
+const mergeRequestState = {
+  open: "opened",
+  closed: "closed",
+  all: "all",
+} as const;
 
 export const gitlab: GitProvider = {
   getCurrentUser: async (token) => {
@@ -33,8 +57,14 @@ export const gitlab: GitProvider = {
   },
   listRepos: async function ({
     token,
-    options: { starred = false },
-  }): Promise<GitRepository[]> {
+    options: {
+      starred = false,
+      sort = "name",
+      direction = "asc",
+      page = 1,
+      perPage = DEFAULT_PER_PAGE,
+    },
+  }): Promise<Paginated<GitRepository>> {
     // https://docs.gitlab.com/api/projects/#list-projects
     const response = await axios.get<GitlabProject[]>(
       "https://gitlab.com/api/v4/projects",
@@ -45,13 +75,17 @@ export const gitlab: GitProvider = {
           simple: true,
           archived: false,
           starred: starred,
+          order_by: projectOrderBy[sort],
+          sort: direction,
+          page,
+          per_page: perPage,
         },
       },
     );
 
     const data = response.data;
 
-    const gitRepos: GitRepository[] = data.map((project) => ({
+    const items: GitRepository[] = data.map((project) => ({
       id: project.id,
       webUrl: project.web_url,
       name: project.name,
@@ -64,29 +98,40 @@ export const gitlab: GitProvider = {
       },
     }));
 
-    return gitRepos;
+    return { items, page, perPage, hasMore: items.length === perPage };
   },
   listPullRequests: async function ({
     token,
     repo,
-  }: {
-    token: string;
-    owner: string;
-    repo: string;
-  }): Promise<GitPullRequest[]> {
+    options = {},
+  }): Promise<Paginated<GitPullRequest>> {
+    const {
+      state = "open",
+      authorLogin,
+      sort = "updated",
+      direction = "desc",
+      page = 1,
+      perPage = DEFAULT_PER_PAGE,
+    } = options;
+
     // https://docs.gitlab.com/api/merge_requests/#list-merge-requests
     const response = await axios.get<GitlabMergeRequest[]>(
       `https://gitlab.com/api/v4/projects/${repo}/merge_requests`,
       {
         params: {
           private_token: token,
-          state: "opened",
+          state: mergeRequestState[state],
+          author_username: authorLogin,
+          order_by: mergeRequestOrderBy[sort],
+          sort: direction,
+          page,
+          per_page: perPage,
         },
       },
     );
 
     const data = response.data;
-    const gitPullRequests: GitPullRequest[] = data.map((mr) => ({
+    const items: GitPullRequest[] = data.map((mr) => ({
       id: mr.id,
       number: mr.iid,
       draft: mr.work_in_progress,
@@ -109,6 +154,6 @@ export const gitlab: GitProvider = {
       },
     }));
 
-    return gitPullRequests;
+    return { items, page, perPage, hasMore: items.length === perPage };
   },
 };

@@ -7,5 +7,5 @@ export default async function Home() {
     getFilters(),
   ]);
 
-  return <PullBoard repositories={boardData.repositories} filters={filters} />;
+  return <PullBoard initialData={boardData} filters={filters} />;
 }

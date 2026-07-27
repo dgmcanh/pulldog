@@ -1,75 +1,126 @@
 "use server";
 
+import { cached, tokenKey } from "@/lib/cache";
 import { decrypt } from "@/lib/crypto";
 import { getProvider } from "@/lib/git-provider";
 import { cookies } from "next/headers";
 import { getAccounts } from "../account/actions";
 import { BoardData, BoardFilters } from "./schema";
 
-export async function getBoardData(): Promise<BoardData> {
-  let allRepos = [];
+const PER_PAGE = 20;
+const BOARD_TTL = 60_000; // matches the React Query staleTime
+const USER_TTL = 60 * 60_000;
+
+export async function getBoardData({
+  page = 1,
+  filters: requested,
+}: { page?: number; filters?: BoardFilters } = {}): Promise<BoardData> {
   const securedAccounts = await getAccounts();
-  const filters = await getFilters();
+  const stored = await getFilters();
+  // the client passes filters explicitly so a fetch can't race the cookie write;
+  // coerced because these reach provider query params and cache keys
+  const filters: BoardFilters = {
+    empty: !!(requested ?? stored).empty,
+    starred: !!(requested ?? stored).starred,
+    byMe: !!(requested ?? stored).byMe,
+  };
   const accounts = securedAccounts.map((account) => ({
     token: decrypt(account.token),
     provider: account.provider,
   }));
 
-  const currentUserLogins = filters.byMe
-    ? new Set(
-        (
-          await Promise.all(
-            accounts.map((account) =>
-              getProvider(account.provider).getCurrentUser(account.token),
-            ),
-          )
-        )
-          .filter(Boolean)
-          .map((u) => u!.login)
-          .filter(Boolean) as string[],
-      )
-    : null;
+  // `empty` is deliberately absent from the key: it hides repos we already
+  // fetched and is applied in the browser, so toggling it costs no request
+  const key = [
+    "board",
+    accounts.map((account) => tokenKey(account.token)).join("+"),
+    filters.starred,
+    filters.byMe,
+    page,
+  ].join(":");
 
-  for (const account of accounts) {
-    const provider = getProvider(account.provider);
+  return cached(key, BOARD_TTL, () => loadBoardPage(accounts, filters, page));
+}
 
-    const repos = await provider.listRepos({
-      token: account.token,
-      options: { starred: filters.starred },
-    });
+async function loadBoardPage(
+  accounts: { token: string; provider: "github" | "gitlab" }[],
+  filters: BoardFilters,
+  page: number,
+): Promise<BoardData> {
+  const perAccount = await Promise.all(
+    accounts.map(async (account) => {
+      const provider = getProvider(account.provider);
 
-    const pullsPromises = repos.map(async (repo) => {
-      let pulls = await provider.listPullRequests({
+      // the same identity for every page and every filter flip — cache it hard
+      const authorLogin = filters.byMe
+        ? ((
+            await cached(`user:${tokenKey(account.token)}`, USER_TTL, () =>
+              provider.getCurrentUser(account.token),
+            )
+          )?.login ?? undefined)
+        : undefined;
+
+      const repos = await provider.listRepos({
         token: account.token,
-        owner: account.provider === "github" ? repo.owner!.login : undefined,
-        repo: account.provider === "github" ? repo.name! : repo.id!,
+        options: {
+          starred: filters.starred,
+          sort: "name",
+          direction: "asc",
+          page,
+          perPage: PER_PAGE,
+        },
       });
 
-      if (currentUserLogins) {
-        pulls = pulls.filter(
-          (pull) => pull.author?.login && currentUserLogins.has(pull.author.login),
-        );
-      }
+      const pullOptions = {
+        state: "open" as const,
+        authorLogin,
+        sort: "updated" as const,
+        direction: "desc" as const,
+        // GitHub can't filter pulls by author, so reach deeper when byMe is on
+        // or a busy repo would hide the user's older pulls behind other people's
+        perPage: authorLogin ? 100 : PER_PAGE,
+      };
 
-      return { id: repo.id, pulls };
-    });
+      // one request for the whole page where the provider supports it
+      const batched = provider.listPullRequestsForRepos
+        ? await provider.listPullRequestsForRepos({
+            token: account.token,
+            repos: repos.items,
+            options: pullOptions,
+          })
+        : null;
 
-    const pullsData = await Promise.all(pullsPromises);
+      const repositories = await Promise.all(
+        repos.items.map(async (repo) => {
+          const pulls = batched?.get(repo.id!);
 
-    const repoWithPulls = repos.map((repo) => ({
-      ...repo,
-      pulls: pullsData.find((pull) => pull.id === repo.id)?.pulls,
-    }));
+          if (pulls) {
+            return { ...repo, pulls };
+          }
 
-    allRepos.push(...repoWithPulls);
-  }
+          const fetched = await provider.listPullRequests({
+            token: account.token,
+            owner:
+              account.provider === "github" ? repo.owner!.login : undefined,
+            repo: account.provider === "github" ? repo.name! : repo.id!,
+            options: pullOptions,
+          });
 
-  if (!filters.empty) {
-    allRepos = allRepos.filter((repo) => (repo.pulls?.length || 0) > 0);
-  }
+          return { ...repo, pulls: fetched.items };
+        }),
+      );
 
+      return { repositories, hasMore: repos.hasMore };
+    }),
+  );
+
+  // every repo on the page is returned, empty ones included: no provider can
+  // filter by "has open pulls", and dropping them here would mean a refetch
+  // every time that switch flips. The board hides them client-side instead.
   return {
-    repositories: allRepos as BoardData["repositories"],
+    repositories: perAccount.flatMap((account) => account.repositories),
+    page,
+    hasMore: perAccount.some((account) => account.hasMore),
   };
 }
 
