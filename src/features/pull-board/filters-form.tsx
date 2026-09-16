@@ -1,7 +1,10 @@
 "use client";
 
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Frame, FramePanel } from "@/components/reui/frame";
+import { Field, FieldGroup, FieldLabel, FieldTitle } from "@/components/ui/field";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Fragment } from "react";
 import { BoardFilters } from "./schema";
 
 const labels: Record<keyof BoardFilters, string> = {
@@ -9,6 +12,8 @@ const labels: Record<keyof BoardFilters, string> = {
   starred: "Starred",
   byMe: "By Me",
 };
+
+const keys = Object.keys(labels) as (keyof BoardFilters)[];
 
 export const FiltersForm = ({
   values,
@@ -19,19 +24,27 @@ export const FiltersForm = ({
 }) => {
   // the board owns the filter state, so this holds none of its own
   return (
-    <div className="space-y-2">
-      {(Object.keys(labels) as (keyof BoardFilters)[]).map((key) => (
-        <Field key={key} orientation="horizontal">
-          <Switch
-            id={key}
-            checked={values[key]}
-            onCheckedChange={(checked) =>
-              onChange({ ...values, [key]: checked })
-            }
-          />
-          <FieldLabel htmlFor={key}>{labels[key]}</FieldLabel>
-        </Field>
-      ))}
-    </div>
+    <Frame spacing="sm">
+      <FramePanel className="overflow-hidden p-0!">
+        <FieldGroup className="gap-0">
+          {keys.map((key, i) => (
+            <Fragment key={key}>
+              {i > 0 && <Separator />}
+              <Field>
+                <FieldLabel className="justify-between p-3">
+                  <FieldTitle>{labels[key]}</FieldTitle>
+                  <Switch
+                    checked={values[key]}
+                    onCheckedChange={(checked) =>
+                      onChange({ ...values, [key]: checked })
+                    }
+                  />
+                </FieldLabel>
+              </Field>
+            </Fragment>
+          ))}
+        </FieldGroup>
+      </FramePanel>
+    </Frame>
   );
 };
