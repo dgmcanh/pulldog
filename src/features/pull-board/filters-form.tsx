@@ -4,27 +4,13 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { BoardFilters } from "./schema";
 
-const filters: {
-  key: keyof BoardFilters;
-  label: string;
-  description: string;
-}[] = [
-  {
-    key: "empty",
-    label: "Empty",
-    description: "Keep repos with nothing open",
-  },
-  {
-    key: "starred",
-    label: "Starred",
-    description: "Only repos you starred",
-  },
-  {
-    key: "byMe",
-    label: "By Me",
-    description: "Only pulls you opened",
-  },
-];
+const labels: Record<keyof BoardFilters, string> = {
+  empty: "Empty",
+  starred: "Starred",
+  byMe: "By Me",
+};
+
+const keys = Object.keys(labels) as (keyof BoardFilters)[];
 
 export const FiltersForm = ({
   values,
@@ -38,18 +24,13 @@ export const FiltersForm = ({
     <div className="w-full">
       <Separator />
       <div className="flex flex-col">
-        {filters.map(({ key, label, description }) => (
+        {keys.map((key) => (
           <label
             key={key}
             htmlFor={key}
-            className="flex cursor-pointer items-center justify-between gap-2 border-b py-3 last:border-b-0"
+            className="flex cursor-pointer items-center justify-between gap-2 border-b py-2.5 last:border-b-0"
           >
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{label}</span>
-              <span className="text-muted-foreground text-xs">
-                {description}
-              </span>
-            </div>
+            <span className="text-sm font-medium">{labels[key]}</span>
             <Switch
               id={key}
               size="sm"
