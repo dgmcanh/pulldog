@@ -113,7 +113,6 @@ export const PullBoard = ({
       sidebar={
         <>
           <SidebarGroup>
-            <SidebarGroupLabel>Filters</SidebarGroupLabel>
             <FiltersForm values={boardFilters} onChange={handleFiltersChange} />
           </SidebarGroup>
 
