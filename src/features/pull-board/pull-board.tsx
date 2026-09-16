@@ -9,7 +9,7 @@ import groupBy from "lodash.groupby";
 import { useEffect, useMemo, useState } from "react";
 import { getBoardData, setFilters } from "./actions";
 import { FiltersForm } from "./filters-form";
-import { NoPullRequests, PullRequest } from "./pull-request";
+import { NoPullRequests, NoPullRequestsRow, PullRequest } from "./pull-request";
 import { Repository } from "./repository";
 import { BoardData, BoardFilters } from "./schema";
 
@@ -155,7 +155,7 @@ export const PullBoard = ({
                     <PullRequest key={pull.id} pullRequest={pull} />
                   ))
                 ) : (
-                  <NoPullRequests className="ml-8" />
+                  <NoPullRequestsRow className="ml-8" />
                 )}
               </div>
             </div>
