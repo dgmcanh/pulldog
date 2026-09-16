@@ -1,7 +1,17 @@
 "use client";
 
-import { Frame, FramePanel } from "@/components/reui/frame";
-import { Field, FieldGroup, FieldLabel, FieldTitle } from "@/components/ui/field";
+import {
+  Frame,
+  FrameHeader,
+  FramePanel,
+  FrameTitle,
+} from "@/components/reui/frame";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldTitle,
+} from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Fragment } from "react";
@@ -25,6 +35,9 @@ export const FiltersForm = ({
   // the board owns the filter state, so this holds none of its own
   return (
     <Frame spacing="sm">
+      <FrameHeader>
+        <FrameTitle>Filters</FrameTitle>
+      </FrameHeader>
       <FramePanel className="overflow-hidden p-0!">
         <FieldGroup className="gap-0">
           {keys.map((key, i) => (
