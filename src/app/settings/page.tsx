@@ -7,7 +7,6 @@ import {
   PageRow,
   PageTitle,
 } from "@/lib/ui/page";
-import { Text } from "@mantine/core";
 import { Component, UserRound } from "lucide-react";
 import Link from "next/link";
 
@@ -24,9 +23,7 @@ export default function Page() {
             <Component className="mt-2 ml-2" size={20} />
           </div>
           <div className="item-content grid grid-cols-1 gap-3 pb-4">
-            <Text size="sm" fw={600} className="mt-2">
-              General
-            </Text>
+            <p className="mt-2 text-sm font-semibold">General</p>
           </div>
         </PageRow>
         <PageRow
@@ -38,9 +35,7 @@ export default function Page() {
             <UserRound className="mt-2 ml-2" size={20} />
           </div>
           <div className="item-content grid grid-cols-1 gap-3 pb-4">
-            <Text size="sm" fw={600} className="mt-2">
-              Accounts
-            </Text>
+            <p className="mt-2 text-sm font-semibold">Accounts</p>
           </div>
         </PageRow>
       </PageContent>

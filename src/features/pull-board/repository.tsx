@@ -1,28 +1,38 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { GitRepository } from "@/lib/git-provider";
-import { Anchor, Avatar, Breadcrumbs } from "@mantine/core";
 
 export const Repository = ({ repo }: { repo: GitRepository }) => {
+  const owner = repo.owner?.login || "rp";
+
   return (
-    <div>
-      <Breadcrumbs separator="›">
-        <Anchor
-          href={repo.owner?.webUrl}
-          className="flex flex-row items-center gap-2 text-(--text-color)"
-        >
-          <Avatar
-            src={repo.owner?.avatarUrl}
-            radius="xl"
-            size="sm"
-            variant="light"
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            href={repo.owner?.webUrl}
+            className="flex flex-row items-center gap-2 text-foreground"
           >
-            {(repo.owner?.login || "rp").slice(0, 2)}
-          </Avatar>
-          <span>{repo.owner?.login}</span>
-        </Anchor>
-        <Anchor href={repo.webUrl} className="text-(--text-color)">
-          {repo.name}
-        </Anchor>
-      </Breadcrumbs>
-    </div>
+            <Avatar size="sm">
+              <AvatarImage src={repo.owner?.avatarUrl} alt={owner} />
+              <AvatarFallback>{owner.slice(0, 2)}</AvatarFallback>
+            </Avatar>
+            <span>{repo.owner?.login}</span>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator>›</BreadcrumbSeparator>
+        <BreadcrumbItem>
+          <BreadcrumbLink href={repo.webUrl} className="text-foreground">
+            {repo.name}
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 };

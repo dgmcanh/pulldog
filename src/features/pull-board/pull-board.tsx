@@ -1,13 +1,11 @@
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
+import { Header, Main, Sidebar } from "@/lib/ui/board-shell";
 import { GitPullRequest } from "@/lib/git-provider";
-import { ActionIcon, Loader, Title } from "@mantine/core";
-import { useIntersection, useWindowScroll } from "@mantine/hooks";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import groupBy from "lodash.groupby";
-import { Settings } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getBoardData, setFilters } from "./actions";
 import { FiltersForm } from "./filters-form";
@@ -145,8 +143,8 @@ export const PullBoard = ({
             <div
               key={repo.id}
               className={clsx(
-                "p-md mb-12 rounded-lg ring-2",
-                focusedRepoId === repo.id ? "ring-dark-4" : "ring-transparent",
+                "mb-12 rounded-lg p-4 ring-2",
+                focusedRepoId === repo.id ? "ring-ring" : "ring-transparent",
               )}
             >
               <div className="relative scroll-mt-24" id={"repo-" + repo.id} />
@@ -167,7 +165,7 @@ export const PullBoard = ({
 
           {!hasData && isFetching && (
             <div className="flex justify-center py-8">
-              <Loader size="sm" />
+              <Spinner />
             </div>
           )}
 
@@ -175,7 +173,7 @@ export const PullBoard = ({
               nothing keeps the observer firing instead of stalling the scroll */}
           {hasNextPage && (
             <div ref={sentinelRef} className="flex justify-center py-8">
-              {isFetchingNextPage && <Loader size="sm" />}
+              {isFetchingNextPage && <Spinner />}
             </div>
           )}
         </Main>
@@ -184,54 +182,20 @@ export const PullBoard = ({
   );
 };
 
-function Header({ className }: { className?: string }) {
-  const [scroll] = useWindowScroll();
+// replaces Mantine's useIntersection; the node lives in state because the
+// sentinel unmounts whenever a page turns out to be the last one
+function useIntersection<T extends Element>() {
+  const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+  const [node, setNode] = useState<T | null>(null);
 
-  const isOnTop = useMemo(() => scroll.y === 0, [scroll]);
+  useEffect(() => {
+    if (!node) return;
 
-  return (
-    <header
-      className={clsx(
-        "h-14 backdrop-blur-sm",
-        !isOnTop && "border-b border-white/5 shadow-md",
-        className,
-      )}
-    >
-      <div className="mx-auto flex max-w-screen-2xl flex-row items-center justify-between px-3 py-2">
-        <Title order={4}>pulldog</Title>
-        <ActionIcon
-          component={Link}
-          href="/settings"
-          variant="subtle"
-          size="xl"
-        >
-          <Settings strokeWidth={3} size={18} />
-        </ActionIcon>
-      </div>
-    </header>
-  );
-}
+    const observer = new IntersectionObserver(([first]) => setEntry(first));
+    observer.observe(node);
 
-function Sidebar({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className={clsx("sticky top-14 block self-start pt-4", className)}>
-      {children}
-    </div>
-  );
-}
+    return () => observer.disconnect();
+  }, [node]);
 
-function Main({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return <main className={clsx("pt-4", className)}>{children}</main>;
+  return { ref: setNode, entry };
 }

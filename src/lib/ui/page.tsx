@@ -1,4 +1,3 @@
-import { Title } from "@mantine/core";
 import clsx from "clsx";
 import { createElement, ElementType, ReactElement, ReactNode } from "react";
 
@@ -40,7 +39,7 @@ const PageHeader = <P extends object = object>({
     element,
     {
       className: clsx(
-        "bg-body grid w-full grid-cols-[3.25rem_1fr_auto] items-center p-2",
+        "bg-background grid w-full grid-cols-[3.25rem_1fr_auto] items-center p-2",
         "first:[&_.page-column.action-icon]:-ml-1",
         "last:[&_.page-column.action-icon]:-mr-0.5",
         { "max-w-screen-md": !fullWidth },
@@ -105,11 +104,7 @@ const PageRow = <P extends object = object>({
 };
 
 const PageTitle = ({ children }: { children: ReactNode }) => {
-  return (
-    <Title order={4} className="col-start-2">
-      {children}
-    </Title>
-  );
+  return <h4 className="col-start-2 text-lg font-bold">{children}</h4>;
 };
 
 const PageColumn = <P extends object = object>({

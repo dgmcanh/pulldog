@@ -1,5 +1,5 @@
+import { AvatarGroup } from "@/components/ui/avatar";
 import { GitPullRequest } from "@/lib/git-provider";
-import { AvatarGroup, Text } from "@mantine/core";
 import clsx from "clsx";
 import { GitPullRequestArrow, GitPullRequestDraft } from "lucide-react";
 import Link from "next/link";
@@ -35,27 +35,22 @@ export const PullRequest = ({
       <div className="flex flex-row gap-2">
         <PullRequestStatusIcon pullRequest={pullRequest} />
         <div className="flex flex-col gap-1">
-          <Text
-            component={Link}
+          <Link
             href={pullRequest.webUrl || ""}
             target="_blank"
             rel="noreferrer"
-            size="lg"
+            className="text-lg"
           >
             {pullRequest.name}
-          </Text>
+          </Link>
 
           <div className="flex flex-row items-center gap-1">
-            <Text
-              size="sm"
-              variant="gradient"
-              gradient={{ from: "cyan", to: "teal", deg: 90 }}
-            >
+            <span className="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-sm text-transparent">
               #{pullRequest.number}
-            </Text>
-            <Text size="sm" c="gray.6">
+            </span>
+            <p className="text-sm text-muted-foreground">
               {!!pullRequest.author && `opened by ${pullRequest.author?.login}`}
-            </Text>
+            </p>
           </div>
         </div>
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { removeAccount } from "@/features/account/actions";
 import { AccountProps } from "@/features/account/schema";
 import { BackIcon } from "@/lib/ui/navigation";
@@ -11,7 +13,7 @@ import {
   PageRow,
   PageTitle,
 } from "@/lib/ui/page";
-import { ActionIcon, Avatar, Text } from "@mantine/core";
+import clsx from "clsx";
 import { Plus, X } from "lucide-react";
 import Link from "next/link";
 
@@ -26,14 +28,12 @@ export const AccountListPage = ({
         <PageColumn element={BackIcon} href="/settings" />
         <PageTitle>Accounts</PageTitle>
         <PageColumn
-          element={ActionIcon}
-          component={Link}
+          element={Link}
           href="/settings/accounts/new"
-          className="-mr-0.5"
-          variant="subtle"
-          size="xl"
-          color="gray"
-          radius="xl"
+          className={clsx(
+            buttonVariants({ variant: "ghost", size: "icon-lg" }),
+            "action-icon -mr-0.5 size-11 rounded-full",
+          )}
         >
           <Plus strokeWidth={3} size={18} />
         </PageColumn>
@@ -50,28 +50,22 @@ export const AccountListPage = ({
 const ListItem = ({ account }: { account: AccountProps }) => {
   return (
     <PageRow rows={3} element="li">
-      <Avatar
-        variant="light"
-        radius="xl"
-        color="gray"
-        src={account.avatarUrl}
-        className="-mt-4.5 ml-0.5"
-      >
-        ?
+      <Avatar className="-mt-4.5 ml-0.5">
+        {account.avatarUrl && (
+          <AvatarImage src={account.avatarUrl} alt={account.login ?? ""} />
+        )}
+        <AvatarFallback>?</AvatarFallback>
       </Avatar>
       <div className="item-content grid grid-cols-[1fr_auto] gap-3 pb-4">
         <div className="flex flex-col">
-          <Text size="sm" fw={600}>
-            {account.name}
-          </Text>
-          <Text
-            size="sm"
-            component={Link}
+          <p className="text-sm font-semibold">{account.name}</p>
+          <Link
             href={account.webUrl || "#"}
             target="_blank"
+            className="text-sm"
           >
             {account.login}
-          </Text>
+          </Link>
         </div>
         <form
           action={removeAccount.bind(null, {
@@ -80,17 +74,14 @@ const ListItem = ({ account }: { account: AccountProps }) => {
             secured: true,
           })}
         >
-          <ActionIcon
-            component="button"
+          <Button
             type="submit"
-            variant="subtle"
-            size="xl"
-            color="gray"
-            radius="xl"
-            className="-mr-0.5"
+            variant="ghost"
+            size="icon-lg"
+            className="-mr-0.5 size-11 rounded-full"
           >
             <X strokeWidth={3} size={18} />
-          </ActionIcon>
+          </Button>
         </form>
       </div>
     </PageRow>

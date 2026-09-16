@@ -36,7 +36,8 @@ SECRET=<random string used to encrypt tokens stored in cookies>
 ### Stack
 
 - **Next.js 15** App Router — routing, Server Components, Server Actions
-- **Mantine 8** — UI component library and form handling
+- **shadcn/ui on Base UI** — owned components in `src/components/ui/`, added with `npx shadcn@latest add <item>`
+- **react-hook-form + @hookform/resolvers** — form state and zod validation
 - **TanStack React Query 5** — client-side server state
 - **Zod** — schema validation for forms and API data
 - **Octokit** — GitHub REST API client
@@ -74,10 +75,11 @@ itself. The cache is in-process, which suits a single instance.
 ### Key Directories
 
 - `src/app/` — Next.js routes. `(pulls)` is a route group for the main board.
+- `src/components/ui/` — shadcn/ui components, owned and editable. Regenerate or add with `npx shadcn@latest add <item>`; the config is `components.json` (Base UI, style `base-nova`).
 - `src/features/` — Feature modules (`pull-board`, `account`). Each contains components, `actions.ts` (Server Actions), and `schema.ts` (Zod types).
 - `src/lib/git-provider/` — Git provider abstraction. `index.ts` exposes a `getProvider("github" | "gitlab")` factory. `github/` uses Octokit; `gitlab/` uses Axios.
 - `src/lib/react-query/` — Query client config and provider.
-- `src/lib/ui/` — Shared layout components (`PageRoot`, `PageHeader`, `PageContent`).
+- `src/lib/ui/` — Shared layout components (`PageRoot`, `PageHeader`, `PageContent`) and the board shell (`Header`, `Sidebar`, `Main`).
 - `src/lib/crypto.ts` — `encrypt()` / `decrypt()` utilities for token storage.
 - `src/lib/cache.ts` — in-process TTL memo for provider reads.
 - `src/env.ts` — Typed environment variable access.
