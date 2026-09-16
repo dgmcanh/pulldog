@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Text } from "@mantine/core";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import clsx from "clsx";
 import Link from "next/link";
 import { AccountProps } from "./schema";
@@ -15,45 +15,26 @@ export const AccountPreview = ({
 }) => {
   return (
     <UserQuery account={account}>
-      {({ user }) => {
-        if (!user) {
-          return (
-            <div className={clsx("grid grid-cols-[auto_1fr] gap-2", className)}>
-              <Avatar variant="light" radius="xl" color="gray">
-                ?
-              </Avatar>
-              <div className="my-auto">
-                <Text size="sm" fw={700}>
-                  Unknown user
-                </Text>
-                <Text size="sm">user@email.com</Text>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <div className={clsx("grid grid-cols-[auto_1fr] gap-2", className)}>
-            <Avatar
-              variant="light"
-              radius="xl"
-              color="gray"
-              src={user.avatarUrl}
-              className="my-auto"
-            >
-              ?
-            </Avatar>
-            <div className="my-auto">
-              <Text size="sm" fw={700}>
-                {user.name}
-              </Text>
-              <Text size="sm" component={Link} href={user.webUrl || "#"}>
+      {({ user }) => (
+        <div className={clsx("grid grid-cols-[auto_1fr] gap-2", className)}>
+          <Avatar className="my-auto">
+            {user?.avatarUrl && (
+              <AvatarImage src={user.avatarUrl} alt={user.login ?? ""} />
+            )}
+            <AvatarFallback>?</AvatarFallback>
+          </Avatar>
+          <div className="my-auto">
+            <p className="text-sm font-bold">{user?.name ?? "Unknown user"}</p>
+            {user ? (
+              <Link href={user.webUrl || "#"} className="text-sm">
                 {user.login}
-              </Text>
-            </div>
+              </Link>
+            ) : (
+              <p className="text-sm">user@email.com</p>
+            )}
           </div>
-        );
-      }}
+        </div>
+      )}
     </UserQuery>
   );
 };

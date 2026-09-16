@@ -1,4 +1,4 @@
-import { ActionIcon } from "@mantine/core";
+import { buttonVariants } from "@/components/ui/button";
 import clsx from "clsx";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -11,16 +11,16 @@ export const BackIcon = ({
   className?: string;
 }) => {
   return (
-    <ActionIcon
-      component={Link}
+    <Link
       href={href}
-      className={clsx("action-icon", className)}
-      variant="subtle"
-      size="xl"
-      color="gray"
-      radius="xl"
+      className={clsx(
+        // a Base UI Button forces role="button", so a link gets the styles only
+        buttonVariants({ variant: "ghost", size: "icon-lg" }),
+        "action-icon size-11 rounded-full",
+        className,
+      )}
     >
       <ArrowLeft strokeWidth={3} size={18} />
-    </ActionIcon>
+    </Link>
   );
 };

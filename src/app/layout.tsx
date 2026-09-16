@@ -1,14 +1,21 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import ReactQueryProvider from "@/lib/react-query/react-query-provider";
-import { defaultColorScheme, fontMono, fontSans, theme } from "@/theme";
-import {
-  ColorSchemeScript,
-  mantineHtmlProps,
-  MantineProvider,
-} from "@mantine/core";
 import clsx from "clsx";
 import type { Metadata } from "next";
+import { Geist_Mono, Poppins } from "next/font/google";
 
 import "./globals.css";
+
+const fontSans = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const fontMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Pulldog",
@@ -21,10 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript defaultColorScheme={defaultColorScheme} />
-      </head>
+    // dark only — there is no toggle, so the class is enough and colorScheme
+    // carries it to native scrollbars and popups
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body
         className={clsx(
           fontSans.variable,
@@ -33,12 +39,7 @@ export default function RootLayout({
         )}
       >
         <ReactQueryProvider>
-          <MantineProvider
-            defaultColorScheme={defaultColorScheme}
-            theme={theme}
-          >
-            {children}
-          </MantineProvider>
+          <TooltipProvider>{children}</TooltipProvider>
         </ReactQueryProvider>
       </body>
     </html>

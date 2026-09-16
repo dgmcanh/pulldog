@@ -4,17 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+pnpm, not npm — the lockfile is `pnpm-lock.yaml`. Node 24 (pinned by Volta).
+
 ```bash
-npm run dev       # Start development server
-npm run build     # Production build
-npm run lint       # ESLint via Next.js
-npm run test       # Vitest, single run
-npm run test:watch # Vitest, watch mode
-npm run clean      # Run cleanup script
+pnpm dev            # Development server
+pnpm build          # Production build
+pnpm lint           # ESLint via `next lint`
+pnpm test           # Vitest, single run
+pnpm test:watch     # Vitest, watch mode
+pnpm clean          # Delete .next, node_modules and empty dirs
+pnpm exec tsc --noEmit                      # Typecheck — no script for it
+pnpm exec vitest run src/lib/cache.test.ts  # One test file
 ```
 
 Tests are Vitest, in `*.test.ts` files next to the code they cover. They run in
 the default node environment with no network — provider responses are fixtures.
+`@/` resolves to `src/` in both Next.js and Vitest.
 
 ## Environment
 
@@ -31,7 +36,8 @@ SECRET=<random string used to encrypt tokens stored in cookies>
 ### Stack
 
 - **Next.js 15** App Router — routing, Server Components, Server Actions
-- **Mantine 8** — UI component library and form handling
+- **shadcn/ui on Base UI** — owned components in `src/components/ui/`, added with `npx shadcn@latest add <item>`
+- **react-hook-form + @hookform/resolvers** — form state and zod validation
 - **TanStack React Query 5** — client-side server state
 - **Zod** — schema validation for forms and API data
 - **Octokit** — GitHub REST API client
@@ -69,10 +75,11 @@ itself. The cache is in-process, which suits a single instance.
 ### Key Directories
 
 - `src/app/` — Next.js routes. `(pulls)` is a route group for the main board.
+- `src/components/ui/` — shadcn/ui components, owned and editable. Regenerate or add with `npx shadcn@latest add <item>`; the config is `components.json` (Base UI, style `base-nova`).
 - `src/features/` — Feature modules (`pull-board`, `account`). Each contains components, `actions.ts` (Server Actions), and `schema.ts` (Zod types).
 - `src/lib/git-provider/` — Git provider abstraction. `index.ts` exposes a `getProvider("github" | "gitlab")` factory. `github/` uses Octokit; `gitlab/` uses Axios.
 - `src/lib/react-query/` — Query client config and provider.
-- `src/lib/ui/` — Shared layout components (`PageRoot`, `PageHeader`, `PageContent`).
+- `src/lib/ui/` — Shared layout components (`PageRoot`, `PageHeader`, `PageContent`) and the board shell (`Header`, `Sidebar`, `Main`).
 - `src/lib/crypto.ts` — `encrypt()` / `decrypt()` utilities for token storage.
 - `src/lib/cache.ts` — in-process TTL memo for provider reads.
 - `src/env.ts` — Typed environment variable access.

@@ -1,8 +1,15 @@
 "use client";
 
-import { Switch } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { Switch } from "@/components/ui/switch";
 import { BoardFilters } from "./schema";
+
+const labels: Record<keyof BoardFilters, string> = {
+  empty: "Empty",
+  starred: "Starred",
+  byMe: "By Me",
+};
+
+const keys = Object.keys(labels) as (keyof BoardFilters)[];
 
 export const FiltersForm = ({
   values,
@@ -11,31 +18,26 @@ export const FiltersForm = ({
   values: BoardFilters;
   onChange: (values: BoardFilters) => void;
 }) => {
-  const form = useForm({
-    mode: "controlled",
-    initialValues: values,
-  });
-
+  // the board owns the filter state, so this holds none of its own
   return (
-    <form onChange={form.onSubmit(onChange)} className="space-y-2">
-      <Switch
-        label="Empty"
-        defaultChecked={values.empty}
-        key={form.key("empty")}
-        {...form.getInputProps("empty")}
-      />
-      <Switch
-        label="Starred"
-        defaultChecked={values.starred}
-        key={form.key("starred")}
-        {...form.getInputProps("starred")}
-      />
-      <Switch
-        label="By Me"
-        defaultChecked={values.byMe}
-        key={form.key("byMe")}
-        {...form.getInputProps("byMe")}
-      />
-    </form>
+    <div className="flex w-full flex-col">
+      {keys.map((key) => (
+        <label
+          key={key}
+          htmlFor={key}
+          className="flex cursor-pointer items-center justify-between gap-2 border-b py-2.5 last:border-b-0"
+        >
+          <span className="text-sm font-medium">{labels[key]}</span>
+          <Switch
+            id={key}
+            size="sm"
+            checked={values[key]}
+            onCheckedChange={(checked) =>
+              onChange({ ...values, [key]: checked })
+            }
+          />
+        </label>
+      ))}
+    </div>
   );
 };

@@ -1,17 +1,22 @@
 "use client";
 
+import { Spinner } from "@/components/ui/spinner";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { BoardShell } from "@/lib/ui/board-shell";
 import { GitPullRequest } from "@/lib/git-provider";
-import { ActionIcon, Loader, Title } from "@mantine/core";
-import { useIntersection, useWindowScroll } from "@mantine/hooks";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import groupBy from "lodash.groupby";
-import { Settings } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getBoardData, setFilters } from "./actions";
 import { FiltersForm } from "./filters-form";
-import { NoPullRequests, PullRequest } from "./pull-request";
+import { NoPullRequests, NoPullRequestsRow, PullRequest } from "./pull-request";
 import { Repository } from "./repository";
 import { BoardData, BoardFilters } from "./schema";
 
@@ -104,134 +109,92 @@ export const PullBoard = ({
   };
 
   return (
-    <div>
-      <Header className="sticky top-0 z-10" />
+    <BoardShell
+      sidebar={
+        <>
+          <SidebarGroup>
+            <FiltersForm values={boardFilters} onChange={handleFiltersChange} />
+          </SidebarGroup>
 
-      <div className="mx-auto grid max-w-screen-xl grid-cols-[auto_1fr] gap-6 px-3">
-        <Sidebar className="max-w-[400px] min-w-[300px] pt-8">
-          <FiltersForm values={boardFilters} onChange={handleFiltersChange} />
-
-          <ul className="mt-8">
-            {repoIndexes.map((owner) => (
-              <div key={owner.owner} className="pb-6">
-                <h4 className="mb-1 rounded-md py-1 text-sm font-semibold">
-                  {owner.owner}
-                </h4>
-
-                <div className="grid grid-flow-row auto-rows-max text-sm">
-                  {owner.repos.map((repo) => (
-                    <button
+          {repoIndexes.map((owner) => (
+            <SidebarGroup key={owner.owner}>
+              <SidebarGroupLabel>{owner.owner}</SidebarGroupLabel>
+              <SidebarMenu>
+                {owner.repos.map((repo) => (
+                  <SidebarMenuItem key={repo.id}>
+                    <SidebarMenuButton
+                      isActive={focusedRepoId === repo.id}
                       onClick={() =>
                         handleRepoNavClick(
                           repo.id as unknown as string | number,
                         )
                       }
-                      key={repo.id}
-                      className={clsx(
-                        "text-muted-foreground flex w-full cursor-pointer items-center rounded-md border border-transparent py-1 hover:underline",
-                      )}
                     >
                       {repo.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </ul>
-        </Sidebar>
-
-        <Main>
-          {repositories.map((repo) => (
-            <div
-              key={repo.id}
-              className={clsx(
-                "p-md mb-12 rounded-lg ring-2",
-                focusedRepoId === repo.id ? "ring-dark-4" : "ring-transparent",
-              )}
-            >
-              <div className="relative scroll-mt-24" id={"repo-" + repo.id} />
-              <Repository repo={repo} />
-              <div className="mt-3 flex flex-col gap-3">
-                {repo.pulls && repo.pulls.length > 0 ? (
-                  repo.pulls.map((pull: GitPullRequest) => (
-                    <PullRequest key={pull.id} pullRequest={pull} />
-                  ))
-                ) : (
-                  <NoPullRequests className="ml-8" />
-                )}
-              </div>
-            </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
           ))}
-
-          {!hasData && !hasNextPage && !isFetching && <NoPullRequests />}
-
-          {!hasData && isFetching && (
-            <div className="flex justify-center py-8">
-              <Loader size="sm" />
-            </div>
+        </>
+      }
+    >
+      {repositories.map((repo) => (
+        <div
+          key={repo.id}
+          className={clsx(
+            "mb-12 rounded-lg p-4 ring-2",
+            focusedRepoId === repo.id ? "ring-ring" : "ring-transparent",
           )}
+        >
+          <div className="relative scroll-mt-24" id={"repo-" + repo.id} />
+          <Repository repo={repo} />
+          <div className="mt-3 flex flex-col gap-3">
+            {repo.pulls && repo.pulls.length > 0 ? (
+              repo.pulls.map((pull: GitPullRequest) => (
+                <PullRequest key={pull.id} pullRequest={pull} />
+              ))
+            ) : (
+              <NoPullRequestsRow className="ml-8" />
+            )}
+          </div>
+        </div>
+      ))}
 
-          {/* stays mounted while more pages exist, so a page filtered down to
-              nothing keeps the observer firing instead of stalling the scroll */}
-          {hasNextPage && (
-            <div ref={sentinelRef} className="flex justify-center py-8">
-              {isFetchingNextPage && <Loader size="sm" />}
-            </div>
-          )}
-        </Main>
-      </div>
-    </div>
+      {!hasData && !hasNextPage && !isFetching && <NoPullRequests />}
+
+      {!hasData && isFetching && (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      )}
+
+      {/* stays mounted while more pages exist, so a page filtered down to
+          nothing keeps the observer firing instead of stalling the scroll */}
+      {hasNextPage && (
+        <div ref={sentinelRef} className="flex justify-center py-8">
+          {isFetchingNextPage && <Spinner />}
+        </div>
+      )}
+    </BoardShell>
   );
 };
 
-function Header({ className }: { className?: string }) {
-  const [scroll] = useWindowScroll();
+// replaces Mantine's useIntersection; the node lives in state because the
+// sentinel unmounts whenever a page turns out to be the last one
+function useIntersection<T extends Element>() {
+  const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+  const [node, setNode] = useState<T | null>(null);
 
-  const isOnTop = useMemo(() => scroll.y === 0, [scroll]);
+  useEffect(() => {
+    if (!node) return;
 
-  return (
-    <header
-      className={clsx(
-        "h-14 backdrop-blur-sm",
-        !isOnTop && "border-b border-white/5 shadow-md",
-        className,
-      )}
-    >
-      <div className="mx-auto flex max-w-screen-2xl flex-row items-center justify-between px-3 py-2">
-        <Title order={4}>pulldog</Title>
-        <ActionIcon
-          component={Link}
-          href="/settings"
-          variant="subtle"
-          size="xl"
-        >
-          <Settings strokeWidth={3} size={18} />
-        </ActionIcon>
-      </div>
-    </header>
-  );
-}
+    const observer = new IntersectionObserver(([first]) => setEntry(first));
+    observer.observe(node);
 
-function Sidebar({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className={clsx("sticky top-14 block self-start pt-4", className)}>
-      {children}
-    </div>
-  );
-}
+    return () => observer.disconnect();
+  }, [node]);
 
-function Main({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return <main className={clsx("pt-4", className)}>{children}</main>;
+  return { ref: setNode, entry };
 }
