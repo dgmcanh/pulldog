@@ -4,17 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+pnpm, not npm — the lockfile is `pnpm-lock.yaml`. Node 24 (pinned by Volta).
+
 ```bash
-npm run dev       # Start development server
-npm run build     # Production build
-npm run lint       # ESLint via Next.js
-npm run test       # Vitest, single run
-npm run test:watch # Vitest, watch mode
-npm run clean      # Run cleanup script
+pnpm dev            # Development server
+pnpm build          # Production build
+pnpm lint           # ESLint via `next lint`
+pnpm test           # Vitest, single run
+pnpm test:watch     # Vitest, watch mode
+pnpm clean          # Delete .next, node_modules and empty dirs
+pnpm exec tsc --noEmit                      # Typecheck — no script for it
+pnpm exec vitest run src/lib/cache.test.ts  # One test file
 ```
 
 Tests are Vitest, in `*.test.ts` files next to the code they cover. They run in
 the default node environment with no network — provider responses are fixtures.
+`@/` resolves to `src/` in both Next.js and Vitest.
 
 ## Environment
 
