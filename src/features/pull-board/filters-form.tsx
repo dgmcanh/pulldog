@@ -1,29 +1,17 @@
 "use client";
 
-import {
-  Frame,
-  FrameHeader,
-  FramePanel,
-  FrameTitle,
-} from "@/components/reui/frame";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldTitle,
-} from "@/components/ui/field";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Fragment } from "react";
+import { Toggle } from "@/components/ui/toggle";
 import { BoardFilters } from "./schema";
 
-const labels: Record<keyof BoardFilters, string> = {
-  empty: "Empty",
-  starred: "Starred",
-  byMe: "By Me",
-};
-
-const keys = Object.keys(labels) as (keyof BoardFilters)[];
+const filters: {
+  key: keyof BoardFilters;
+  label: string;
+  dot: string;
+}[] = [
+  { key: "empty", label: "Empty", dot: "bg-zinc-400" },
+  { key: "starred", label: "Starred", dot: "bg-amber-400" },
+  { key: "byMe", label: "By Me", dot: "bg-cyan-400" },
+];
 
 export const FiltersForm = ({
   values,
@@ -34,30 +22,20 @@ export const FiltersForm = ({
 }) => {
   // the board owns the filter state, so this holds none of its own
   return (
-    <Frame spacing="sm">
-      <FrameHeader>
-        <FrameTitle>Filters</FrameTitle>
-      </FrameHeader>
-      <FramePanel className="overflow-hidden p-0!">
-        <FieldGroup className="gap-0">
-          {keys.map((key, i) => (
-            <Fragment key={key}>
-              {i > 0 && <Separator />}
-              <Field>
-                <FieldLabel className="justify-between p-3">
-                  <FieldTitle>{labels[key]}</FieldTitle>
-                  <Switch
-                    checked={values[key]}
-                    onCheckedChange={(checked) =>
-                      onChange({ ...values, [key]: checked })
-                    }
-                  />
-                </FieldLabel>
-              </Field>
-            </Fragment>
-          ))}
-        </FieldGroup>
-      </FramePanel>
-    </Frame>
+    <div className="flex flex-wrap gap-2">
+      {filters.map(({ key, label, dot }) => (
+        <Toggle
+          key={key}
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          pressed={values[key]}
+          onPressedChange={(pressed) => onChange({ ...values, [key]: pressed })}
+        >
+          <span className={`size-2 rounded-full ${dot}`} />
+          {label}
+        </Toggle>
+      ))}
+    </div>
   );
 };
