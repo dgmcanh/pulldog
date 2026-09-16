@@ -1,6 +1,16 @@
 "use client";
 
 import { buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import clsx from "clsx";
 import { Settings } from "lucide-react";
 import Link from "next/link";
@@ -22,61 +32,56 @@ function useAtTop() {
   return atTop;
 }
 
-export function Header({
-  className,
+export function BoardShell({
+  sidebar,
+  children,
   disabled = false,
 }: {
-  className?: string;
+  sidebar?: React.ReactNode;
+  children?: React.ReactNode;
   disabled?: boolean;
 }) {
   const isOnTop = useAtTop();
 
   return (
-    <header
-      className={clsx(
-        "h-14 backdrop-blur-sm",
-        !isOnTop && "border-b border-white/5 shadow-md",
-        className,
-      )}
-    >
-      <div className="mx-auto flex max-w-screen-2xl flex-row items-center justify-between px-3 py-2">
-        <h4 className="text-lg font-bold">pulldog</h4>
-        <Link
-          href="/settings"
-          aria-disabled={disabled}
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader className="h-14 justify-center px-4">
+          <h4 className="text-lg font-bold">pulldog</h4>
+        </SidebarHeader>
+        <SidebarContent className="gap-0 px-2">{sidebar}</SidebarContent>
+        <SidebarRail />
+      </Sidebar>
+      <SidebarInset>
+        <header
           className={clsx(
-            buttonVariants({ variant: "ghost", size: "icon-lg" }),
-            "size-11 rounded-full",
-            disabled && "pointer-events-none opacity-50",
+            "bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center backdrop-blur-sm",
+            !isOnTop && "border-b border-white/5 shadow-md",
           )}
         >
-          <Settings strokeWidth={3} size={18} />
-        </Link>
-      </div>
-    </header>
+          <div className="flex flex-1 items-center gap-2 px-3">
+            <SidebarTrigger />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+            />
+          </div>
+          <div className="ml-auto px-3">
+            <Link
+              href="/settings"
+              aria-disabled={disabled}
+              className={clsx(
+                buttonVariants({ variant: "ghost", size: "icon-lg" }),
+                "size-11 rounded-full",
+                disabled && "pointer-events-none opacity-50",
+              )}
+            >
+              <Settings strokeWidth={3} size={18} />
+            </Link>
+          </div>
+        </header>
+        <main className="px-4 py-4">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
-}
-
-export function Sidebar({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className={clsx("sticky top-14 block self-start pt-4", className)}>
-      {children}
-    </div>
-  );
-}
-
-export function Main({
-  className,
-  children,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  return <main className={clsx("pt-4", className)}>{children}</main>;
 }

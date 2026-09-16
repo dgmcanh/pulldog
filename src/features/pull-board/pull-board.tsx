@@ -1,7 +1,14 @@
 "use client";
 
 import { Spinner } from "@/components/ui/spinner";
-import { Header, Main, Sidebar } from "@/lib/ui/board-shell";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { BoardShell } from "@/lib/ui/board-shell";
 import { GitPullRequest } from "@/lib/git-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import clsx from "clsx";
@@ -102,83 +109,75 @@ export const PullBoard = ({
   };
 
   return (
-    <div>
-      <Header className="sticky top-0 z-10" />
+    <BoardShell
+      sidebar={
+        <>
+          <SidebarGroup>
+            <FiltersForm values={boardFilters} onChange={handleFiltersChange} />
+          </SidebarGroup>
 
-      <div className="mx-auto grid max-w-screen-xl grid-cols-[auto_1fr] gap-6 px-3">
-        <Sidebar className="max-w-[400px] min-w-[300px] pt-8">
-          <FiltersForm values={boardFilters} onChange={handleFiltersChange} />
-
-          <ul className="mt-8">
-            {repoIndexes.map((owner) => (
-              <div key={owner.owner} className="pb-6">
-                <h4 className="mb-1 rounded-md py-1 text-sm font-semibold">
-                  {owner.owner}
-                </h4>
-
-                <div className="grid grid-flow-row auto-rows-max text-sm">
-                  {owner.repos.map((repo) => (
-                    <button
+          {repoIndexes.map((owner) => (
+            <SidebarGroup key={owner.owner}>
+              <SidebarGroupLabel>{owner.owner}</SidebarGroupLabel>
+              <SidebarMenu>
+                {owner.repos.map((repo) => (
+                  <SidebarMenuItem key={repo.id}>
+                    <SidebarMenuButton
+                      isActive={focusedRepoId === repo.id}
                       onClick={() =>
                         handleRepoNavClick(
                           repo.id as unknown as string | number,
                         )
                       }
-                      key={repo.id}
-                      className={clsx(
-                        "text-muted-foreground flex w-full cursor-pointer items-center rounded-md border border-transparent py-1 hover:underline",
-                      )}
                     >
                       {repo.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </ul>
-        </Sidebar>
-
-        <Main>
-          {repositories.map((repo) => (
-            <div
-              key={repo.id}
-              className={clsx(
-                "mb-12 rounded-lg p-4 ring-2",
-                focusedRepoId === repo.id ? "ring-ring" : "ring-transparent",
-              )}
-            >
-              <div className="relative scroll-mt-24" id={"repo-" + repo.id} />
-              <Repository repo={repo} />
-              <div className="mt-3 flex flex-col gap-3">
-                {repo.pulls && repo.pulls.length > 0 ? (
-                  repo.pulls.map((pull: GitPullRequest) => (
-                    <PullRequest key={pull.id} pullRequest={pull} />
-                  ))
-                ) : (
-                  <NoPullRequestsRow className="ml-8" />
-                )}
-              </div>
-            </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
           ))}
-
-          {!hasData && !hasNextPage && !isFetching && <NoPullRequests />}
-
-          {!hasData && isFetching && (
-            <div className="flex justify-center py-8">
-              <Spinner />
-            </div>
+        </>
+      }
+    >
+      {repositories.map((repo) => (
+        <div
+          key={repo.id}
+          className={clsx(
+            "mb-12 rounded-lg p-4 ring-2",
+            focusedRepoId === repo.id ? "ring-ring" : "ring-transparent",
           )}
+        >
+          <div className="relative scroll-mt-24" id={"repo-" + repo.id} />
+          <Repository repo={repo} />
+          <div className="mt-3 flex flex-col gap-3">
+            {repo.pulls && repo.pulls.length > 0 ? (
+              repo.pulls.map((pull: GitPullRequest) => (
+                <PullRequest key={pull.id} pullRequest={pull} />
+              ))
+            ) : (
+              <NoPullRequestsRow className="ml-8" />
+            )}
+          </div>
+        </div>
+      ))}
 
-          {/* stays mounted while more pages exist, so a page filtered down to
-              nothing keeps the observer firing instead of stalling the scroll */}
-          {hasNextPage && (
-            <div ref={sentinelRef} className="flex justify-center py-8">
-              {isFetchingNextPage && <Spinner />}
-            </div>
-          )}
-        </Main>
-      </div>
-    </div>
+      {!hasData && !hasNextPage && !isFetching && <NoPullRequests />}
+
+      {!hasData && isFetching && (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      )}
+
+      {/* stays mounted while more pages exist, so a page filtered down to
+          nothing keeps the observer firing instead of stalling the scroll */}
+      {hasNextPage && (
+        <div ref={sentinelRef} className="flex justify-center py-8">
+          {isFetchingNextPage && <Spinner />}
+        </div>
+      )}
+    </BoardShell>
   );
 };
 
