@@ -1,16 +1,29 @@
 "use client";
 
-import { Toggle } from "@/components/ui/toggle";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { BoardFilters } from "./schema";
 
 const filters: {
   key: keyof BoardFilters;
   label: string;
-  dot: string;
+  description: string;
 }[] = [
-  { key: "empty", label: "Empty", dot: "bg-zinc-400" },
-  { key: "starred", label: "Starred", dot: "bg-amber-400" },
-  { key: "byMe", label: "By Me", dot: "bg-cyan-400" },
+  {
+    key: "empty",
+    label: "Empty",
+    description: "Keep repos with nothing open",
+  },
+  {
+    key: "starred",
+    label: "Starred",
+    description: "Only repos you starred",
+  },
+  {
+    key: "byMe",
+    label: "By Me",
+    description: "Only pulls you opened",
+  },
 ];
 
 export const FiltersForm = ({
@@ -22,20 +35,32 @@ export const FiltersForm = ({
 }) => {
   // the board owns the filter state, so this holds none of its own
   return (
-    <div className="flex flex-wrap gap-2">
-      {filters.map(({ key, label, dot }) => (
-        <Toggle
-          key={key}
-          variant="outline"
-          size="sm"
-          className="rounded-full"
-          pressed={values[key]}
-          onPressedChange={(pressed) => onChange({ ...values, [key]: pressed })}
-        >
-          <span className={`size-2 rounded-full ${dot}`} />
-          {label}
-        </Toggle>
-      ))}
+    <div className="w-full">
+      <Separator />
+      <div className="flex flex-col">
+        {filters.map(({ key, label, description }) => (
+          <label
+            key={key}
+            htmlFor={key}
+            className="flex cursor-pointer items-center justify-between gap-2 border-b py-3 last:border-b-0"
+          >
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">{label}</span>
+              <span className="text-muted-foreground text-xs">
+                {description}
+              </span>
+            </div>
+            <Switch
+              id={key}
+              size="sm"
+              checked={values[key]}
+              onCheckedChange={(checked) =>
+                onChange({ ...values, [key]: checked })
+              }
+            />
+          </label>
+        ))}
+      </div>
     </div>
   );
 };
